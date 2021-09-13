@@ -1,5 +1,21 @@
 #include "hash_table.h"
 
+ht_hash_table* ht_new_sized(int base_size) {
+    ht_hash_table* ht = malloc(sizeof(ht_hash_table));
+
+    ht->base_size = base_size;
+    ht->size = next_prime(base_size);
+    ht->count = 0;
+    ht->items = calloc((size_t)ht->size, sizeof(ht_item*));
+
+    return ht;
+}
+
+/**
+ * Creates a new item
+ * @param k The key chosen for the value
+ * @param v The value of contained in this item
+ */
 ht_item* ht_new_item( char* k,  char* v) {
     ht_item* i = malloc(sizeof(ht_item));
 
@@ -9,22 +25,35 @@ ht_item* ht_new_item( char* k,  char* v) {
     return i;
 }
 
+/**
+ * Creates a new hashtable
+ */
 ht_hash_table* ht_new() {
-    ht_hash_table* ht = malloc(sizeof(ht_hash_table));
+    // ht_hash_table* ht = malloc(sizeof(ht_hash_table));
 
-    ht->size = 53;
-    ht->count = 0;
-    ht->items = calloc((size_t)ht->size, sizeof(ht_item*));
+    // ht->size = 53;
+    // ht->count = 0;
+    // ht->items = calloc((size_t)ht->size, sizeof(ht_item*));
 
-    return ht;
+    // return ht;
+
+    return ht_new_sized(INIT_SIZE);
 }
 
-static void ht_del_item(ht_item* i) {
+/**
+ * Deletes an item by completely remove it from the memory
+ * @param i The item to be deleted
+ */
+void ht_del_item(ht_item* i) {
     free(i->key);
     free(i->value);
     free(i);
 }
 
+/**
+ * Deletes a hash table
+ * @param ht The hash table to be deleted
+ */
 void ht_del_hash_table(ht_hash_table* ht) {
     for (int i = 0; i < ht->size; i++) {
         ht_item* item = ht->items[i];
@@ -38,10 +67,22 @@ void ht_del_hash_table(ht_hash_table* ht) {
     free(ht);
 }
 
+/**
+ * Generates a hash number by the value provided
+ *
+ * a is a prime number, m is the size of the hash table
+ * For each letter in the value, the hash number, starting from zero, is incresed
+ * by a^(index) * the ascii code for the letter. The result is a big number, it is
+ * then modded by the size of the hash table, m, to get its position in the table
+ *
+ * @param s The value of the item
+ * @param a A magic prime number used by this hash algorithm
+ * @param m The size of the hash table, used for modular operation
+ */
 int hash( char* s,  int a,  int m) {
     long hash = 0;
 
-    const int len = strlen(s);
+    int len = strlen(s);
 
     for (int i = 0; i < len; i++) {
         hash += (long) pow(a, len - i - 1) * s[i];
@@ -81,7 +122,11 @@ void ht_insert(ht_hash_table* ht, char* key, char* value) {
 }
 
 
-/* find v by k */
+/**
+ * Finds v by k
+ * @param ht The hash table to look for
+ * @param key The key to be searched for
+ */
 char* ht_search(ht_hash_table* ht, char* key) {
     int i = 1;
     int index = ht_get_hash(key, ht->size, 0);
@@ -104,6 +149,8 @@ char* ht_search(ht_hash_table* ht, char* key) {
  * instead replace it with a marker
  * shifting every item in the chain will resulting in O(n)
  * which is not ideal
+ * @param ht The hashtable which to be operated on
+ * @param key
  */
 void ht_delete(ht_hash_table* ht, char* key) {
     int i = 1;
@@ -125,6 +172,14 @@ void ht_delete(ht_hash_table* ht, char* key) {
     ht->count--;
 }
 
+void ht_resize(ht_hash_table* ht, int base_size) {
+
+}
+
+/**
+ * Checks whether the input number is prime
+ * @param num The number to be checked on
+ */
 int is_prime(int num) {
     if (num <= 1) {
         return 0;
@@ -143,6 +198,10 @@ int is_prime(int num) {
     return 1;
 }
 
+/**
+ * Gets the next prime number after this number
+ * @param num The number to be calculated on
+ */
 int next_prime(int num) {
     while (!is_prime(num)) {
         num++;
